@@ -76,28 +76,28 @@ async function run() {
 
 
         // Filtering endpoint with brand name, category, and price range
-    // app.get("/product/Categorization", async (req, res) => {
-    //     const {brand, category, minPrice, maxPrice} = req.query;
-    //     let query = {};
+    app.get("/product/Categorization", async (req, res) => {
+        const {brand, category, minPrice, maxPrice} = req.query;
+        let query = {};
 
-    //     if (brand) {
-    //       query.BrandName = brand;
-    //     }
+        if (brand) {
+          query.BrandName = brand;
+        }
   
-    //     if (category) {
-    //       query.Category = category;
-    //     }
+        if (category) {
+          query.Category = category;
+        }
         
-    //     if (minPrice || maxPrice) {
-    //       query.PriceInTaka = {};
-    //       if (minPrice) query.PriceInTaka.$gte = parseFloat(minPrice);
-    //       if (maxPrice) query.PriceInTaka.$lte = parseFloat(maxPrice);
-    //     }
+        if (minPrice || maxPrice) {
+          query.PriceInTaka = {};
+          if (minPrice) query.PriceInTaka.$gte = parseFloat(minPrice);
+          if (maxPrice) query.PriceInTaka.$lte = parseFloat(maxPrice);
+        }
   
         
-    //     const result = await productCollection.find(query).toArray();
-    //     res.send(result);
-    //   });
+        const result = await productCollection.find(query).toArray();
+        res.send(result);
+      });
 
 
 
