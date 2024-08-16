@@ -33,6 +33,7 @@ async function run() {
     const productCollection = client.db("techTide").collection("products");
 
     app.get("/products", async (req, res) => {
+        
         const cursor = productCollection.find();
         const result = await cursor.toArray();
         res.send(result);
@@ -50,9 +51,56 @@ async function run() {
     })
 
 
+
+    // sorting
+    app.get("/products/:sort", async (req, res) => {
+        // const { brand, category, minPrice, maxPrice, sort } = req.query;
+        const sort= req.params.sort
+        const query = {};
+
+        let sortOption = {};
+        if (sort === "priceLowHigh") sortOption.PriceInTaka = 1;
+        if (sort === "priceHighLow") sortOption.PriceInTaka = -1;
+        if (sort === "dateNewest") sortOption.ProductCreationDate = -1;
+
+        const products = await productCollection.find(query).sort(sortOption).toArray();
+        res.send(products);
+    });
+
+
       // Pagination endpoint
       
       
+
+
+
+
+        // Filtering endpoint with brand name, category, and price range
+    // app.get("/product/Categorization", async (req, res) => {
+    //     const {brand, category, minPrice, maxPrice} = req.query;
+    //     let query = {};
+
+    //     if (brand) {
+    //       query.BrandName = brand;
+    //     }
+  
+    //     if (category) {
+    //       query.Category = category;
+    //     }
+        
+    //     if (minPrice || maxPrice) {
+    //       query.PriceInTaka = {};
+    //       if (minPrice) query.PriceInTaka.$gte = parseFloat(minPrice);
+    //       if (maxPrice) query.PriceInTaka.$lte = parseFloat(maxPrice);
+    //     }
+  
+        
+    //     const result = await productCollection.find(query).toArray();
+    //     res.send(result);
+    //   });
+
+
+
 
 
     // Send a ping to confirm a successful connection
