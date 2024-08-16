@@ -40,6 +40,20 @@ async function run() {
 
 
 
+    // Endpoint to fetch products with optional search by name
+    app.get("/products/search/:query", async (req, res) =>{
+        const {query} = req.params;
+        const result = await productCollection.find({ProductName:{$regex:query,$options:"i"}}).toArray();
+        res.send(result);
+
+
+    })
+
+
+      // Pagination endpoint
+      
+      
+
 
     // Send a ping to confirm a successful connection
     // await client.db("admin").command({ ping: 1 });
