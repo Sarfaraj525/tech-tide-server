@@ -1,18 +1,22 @@
 const express = require("express");
 const cors = require("cors");
 require("dotenv").config();
-const { MongoClient, ServerApiVersion } = require('mongodb');
+const { MongoClient, ServerApiVersion, CURSOR_FLAGS } = require("mongodb");
 const app = express();
 const port = process.env.PORT || 5000;
 
-
 // middleware
-app.use(cors());
+app.use(
+  cors({
+    origin: [
+      "http://localhost:5173",
+      "https://tech-tide.web.app",
+      "https://tech-tide.firebaseapp.com",
+    ],
+    credentials: true,
+  })
+);
 app.use(express.json());
-
-
-
-
 
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.uqi3nbn.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0`;
 
@@ -22,7 +26,7 @@ const client = new MongoClient(uri, {
     version: ServerApiVersion.v1,
     strict: true,
     deprecationErrors: true,
-  }
+  },
 });
 
 async function run() {
@@ -32,80 +36,88 @@ async function run() {
 
     const productCollection = client.db("techTide").collection("products");
 
+    // app.get("/products", async (req, res) => {
+
+    //     const cursor = productCollection.find();
+    //     const result = await cursor.toArray();
+    //     res.send(result);
+    //   });
+
     app.get("/products", async (req, res) => {
-        
-        const cursor = productCollection.find();
-        const result = await cursor.toArray();
-        res.send(result);
-      });
-
-
+      const { currentPage } = req.query;
+      const limit = 9;
+      const skip = parseInt(currentPage) * limit;
+      const result = await productCollection
+        .find()
+        .skip(skip)
+        .limit(limit)
+        .toArray();
+      res.send(result);
+    });
 
     // Endpoint to fetch products with optional search by name
-    app.get("/products/search/:query", async (req, res) =>{
-        const {query} = req.params;
-        const result = await productCollection.find({ProductName:{$regex:query,$options:"i"}}).toArray();
-        res.send(result);
-
-
-    })
-
-
+    app.get("/products/search/:query", async (req, res) => {
+      const { query } = req.params;
+      const result = await productCollection
+        .find({ ProductName: { $regex: query, $options: "i" } })
+        .toArray();
+      res.send(result);
+    });
 
     // sorting
     app.get("/products/:sort", async (req, res) => {
-        // const { brand, category, minPrice, maxPrice, sort } = req.query;
-        const sort= req.params.sort
-        const query = {};
+      const r = req.params.sort;
+      const sort = r.split(",");
+      const [property, value] = sort;
 
-        let sortOption = {};
-        if (sort === "priceLowHigh") sortOption.PriceInTaka = 1;
-        if (sort === "priceHighLow") sortOption.PriceInTaka = -1;
-        if (sort === "dateNewest") sortOption.ProductCreationDate = -1;
+      const sortOption = {
+        [property]: parseInt(value, 10),
+      };
 
-        const products = await productCollection.find(query).sort(sortOption).toArray();
-        res.send(products);
+      const products = await productCollection
+        .find({})
+        .sort(sortOption)
+        .toArray();
+      res.send(products);
     });
 
+    // Pagination endpoint
+    app.get("/totalProducts", async (req, res) => {
+      const count = await productCollection.countDocuments();
+      res.send({ count });
+    });
 
-      // Pagination endpoint
-      
-      
-
-
-
-
-        // Filtering endpoint with brand name, category, and price range
+    // Filtering endpoint with brand name, category, and price range
     app.get("/product/Categorization", async (req, res) => {
-        const {brand, category, minPrice, maxPrice} = req.query;
-        let query = {};
+      const { brand, category, minPrice, maxPrice } = req.query;
+      let query = {};
 
-        if (brand) {
-          query.BrandName = brand;
-        }
-  
-        if (category) {
-          query.Category = category;
-        }
-        
-        if (minPrice || maxPrice) {
-          query.PriceInTaka = {};
-          if (minPrice) query.PriceInTaka.$gte = parseFloat(minPrice);
-          if (maxPrice) query.PriceInTaka.$lte = parseFloat(maxPrice);
-        }
-  
-        
-        const result = await productCollection.find(query).toArray();
-        res.send(result);
-      });
+      if (brand) {
+        query.BrandName = brand;
+      }
 
+      if (category) {
+        query.Category = category;
+      }
 
+      if (minPrice || maxPrice) {
+        query.PriceInTaka = {};
+        if (minPrice) query.PriceInTaka.$gte = parseFloat(minPrice);
+        if (maxPrice) query.PriceInTaka.$lte = parseFloat(maxPrice);
+      }
 
-
+      if (Object.values(query).length === 0) {
+        return;
+      }
+      const result = await productCollection.find(query).toArray();
+      res.send(result);
+    });
 
     // Send a ping to confirm a successful connection
     // await client.db("admin").command({ ping: 1 });
-    console.log("Pinged your deployment. You successfully connected to MongoDB!");
+    console.log(
+      "Pinged your deployment. You successfully connected to MongoDB!"
+    );
   } finally {
     // Ensures that the client will close when you finish/error
     // await client.close();
@@ -113,11 +125,10 @@ async function run() {
 }
 run().catch(console.dir);
 
-
 app.get("/", (req, res) => {
-    res.send("Tech tide is running");
-  });
-  
-  app.listen(port, () => {
-    console.log(`Tech tide Server is running on port ${port}`);
-  });
+  res.send("Tech tide is running");
+});
+
+app.listen(port, () => {
+  console.log(`Tech tide Server is running on port ${port}`);
+});

@@ -1,6 +1,6 @@
 # ------------# Tech Tide #-----------#
 
-My live link: 
+My live link: https://tech-tide.web.app/
 
 - ## .................Here is the project setup, instructions, and necessary details....................##
 
