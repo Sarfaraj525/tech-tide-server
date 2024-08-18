@@ -36,30 +36,50 @@ async function run() {
 
     const productCollection = client.db("techTide").collection("products");
 
-    // app.get("/products", async (req, res) => {
-
-    //     const cursor = productCollection.find();
-    //     const result = await cursor.toArray();
-    //     res.send(result);
-    //   });
-
     app.get("/products", async (req, res) => {
-      const { currentPage } = req.query;
+      const { brand, category, minPrice, maxPrice, search, currentPage, sort } =
+        req.query;
+      let query = {};
+      let sortOPtion = {};
+
+      if (search) {
+        query.ProductName = { $regex: search, $options: "i" };
+      }
+
+      if (sort === "highToLow") {
+        sortOPtion.PriceInTaka = -1;
+      }
+      if (sort === "LowToHigh") {
+        sortOPtion.PriceInTaka = 1;
+      }
+      if (sort === "new") {
+        sortOPtion.ProductCreationDate = -1;
+      }
+      if (sort === "new") {
+        sortOPtion.ProductCreationTime = -1;
+      }
+
+      if (brand) {
+        query.BrandName = brand;
+      }
+
+      if (category) {
+        query.Category = category;
+      }
+
+      if (minPrice || maxPrice) {
+        query.PriceInTaka = {};
+        if (minPrice) query.PriceInTaka.$gte = parseFloat(minPrice);
+        if (maxPrice) query.PriceInTaka.$lte = parseFloat(maxPrice);
+      }
+
       const limit = 9;
       const skip = parseInt(currentPage) * limit;
       const result = await productCollection
-        .find()
+        .find(query)
+        .sort(sortOPtion)
         .skip(skip)
         .limit(limit)
-        .toArray();
-      res.send(result);
-    });
-
-    // Endpoint to fetch products with optional search by name
-    app.get("/products/search/:query", async (req, res) => {
-      const { query } = req.params;
-      const result = await productCollection
-        .find({ ProductName: { $regex: query, $options: "i" } })
         .toArray();
       res.send(result);
     });
@@ -83,7 +103,28 @@ async function run() {
 
     // Pagination endpoint
     app.get("/totalProducts", async (req, res) => {
-      const count = await productCollection.countDocuments();
+      const { brand, category, minPrice, maxPrice, search } = req.query;
+      let query = {};
+
+      if (search) {
+        query.ProductName = { $regex: search, $options: "i" };
+      }
+
+      if (brand) {
+        query.BrandName = brand;
+      }
+
+      if (category) {
+        query.Category = category;
+      }
+
+      if (minPrice || maxPrice) {
+        query.PriceInTaka = {};
+        if (minPrice) query.PriceInTaka.$gte = parseFloat(minPrice);
+        if (maxPrice) query.PriceInTaka.$lte = parseFloat(maxPrice);
+      }
+
+      const count = await productCollection.countDocuments(query);
       res.send({ count });
     });
 
