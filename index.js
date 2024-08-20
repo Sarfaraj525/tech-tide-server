@@ -46,6 +46,9 @@ async function run() {
         query.ProductName = { $regex: search, $options: "i" };
       }
 
+      // console.log(search);
+      
+
       if (sort === "highToLow") {
         sortOPtion.PriceInTaka = -1;
       }
@@ -85,21 +88,7 @@ async function run() {
     });
 
     // sorting
-    app.get("/products/:sort", async (req, res) => {
-      const r = req.params.sort;
-      const sort = r.split(",");
-      const [property, value] = sort;
-
-      const sortOption = {
-        [property]: parseInt(value, 10),
-      };
-
-      const products = await productCollection
-        .find({})
-        .sort(sortOption)
-        .toArray();
-      res.send(products);
-    });
+    
 
     // Pagination endpoint
     app.get("/totalProducts", async (req, res) => {
@@ -129,30 +118,7 @@ async function run() {
     });
 
     // Filtering endpoint with brand name, category, and price range
-    app.get("/product/Categorization", async (req, res) => {
-      const { brand, category, minPrice, maxPrice } = req.query;
-      let query = {};
-
-      if (brand) {
-        query.BrandName = brand;
-      }
-
-      if (category) {
-        query.Category = category;
-      }
-
-      if (minPrice || maxPrice) {
-        query.PriceInTaka = {};
-        if (minPrice) query.PriceInTaka.$gte = parseFloat(minPrice);
-        if (maxPrice) query.PriceInTaka.$lte = parseFloat(maxPrice);
-      }
-
-      if (Object.values(query).length === 0) {
-        return;
-      }
-      const result = await productCollection.find(query).toArray();
-      res.send(result);
-    });
+    
 
     // Send a ping to confirm a successful connection
     // await client.db("admin").command({ ping: 1 });
